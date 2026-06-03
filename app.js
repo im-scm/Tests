@@ -71,9 +71,23 @@ function parseNumber(v) {
     return typeof v === 'number' ? v : parseFloat(v) || 0;
 }
 
-function parseDateBR(str) {
-    const [d, m, y] = str.split('/');
-    return new Date(y, m - 1, d);
+function parseDateBR(value) {
+    // Excel date number
+    if (typeof value === 'number') {
+        const utc_days = Math.floor(value - 25569);
+        const date = new Date(utc_days * 86400 * 1000);
+        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    // string dd/mm/yyyy
+    if (typeof value === 'string') {
+        const parts = value.split('/');
+        if (parts.length === 3) {
+            return new Date(parts[2], parts[1] - 1, parts[0]);
+        }
+    }
+
+    return null;
 }
 
 // ================= PROCESSAMENTO =================
@@ -102,6 +116,11 @@ function loadDatabaseFile() {
             globalData = processData(json);
             filteredData = [...globalData];
 
+            
+            // ✅ DEBUG (INSERIR AQUI)
+            console.log("✅ Dados carregados:", globalData.length);
+            console.log("✅ Primeira linha:", globalData[0]);
+
             updateAll();
         })
         .catch(() => {
@@ -122,6 +141,10 @@ function handleFileSelect(e) {
 
         globalData = processData(json);
         filteredData = [...globalData];
+   
+        // ✅ DEBUG (INSERIR AQUI)
+        console.log("✅ Dados carregados:", globalData.length);
+        console.log("✅ Primeira linha:", globalData[0]);
 
         updateAll();
     };
