@@ -47,23 +47,19 @@ const chartSeriesConfig = {
     ]
 };
 
-// ================= UTIL =================
-function parseNumber(v) {
-    return typeof v === 'number' ? v : parseFloat(v) || 0;
-}
-
-// ✅ CORREÇÃO DATA (CRÍTICO)
+// ================= FIX DATA (CRÍTICO) =================
 function parseDateBR(value) {
+
+    // Excel number → manter UTC
     if (typeof value === 'number') {
         const utc_days = Math.floor(value - 25569);
-        const date = new Date(utc_days * 86400 * 1000);
-        return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+        return new Date(Date.UTC(1970, 0, utc_days));
     }
 
     if (typeof value === 'string') {
-        const parts = value.split('/');
-        if (parts.length === 3) {
-            return new Date(parts[2], parts[1] - 1, parts[0]);
+        const p = value.split('/');
+        if (p.length === 3) {
+            return new Date(Date.UTC(p[2], p[1] - 1, p[0]));
         }
     }
 
@@ -74,21 +70,22 @@ function parseDateBR(value) {
 function processData(data) {
     return data.map(r => {
         Object.keys(r).forEach(k => {
-            if (k !== 'Data') r[k] = parseNumber(r[k]);
+            if (k !== 'Data') r[k] = parseFloat(r[k]) || 0;
         });
+
         r.Data = parseDateBR(r.Data);
         return r;
-    }).sort((a, b) => a.Data - b.Data);
+
+    }).filter(r => r.Data)
+      .sort((a, b) => a.Data - b.Data);
 }
 
-// ================= LOAD AUTO =================
+// ================= LOAD =================
 function loadDatabaseFile() {
     fetch('./app_scm_data.xlsx')
-        .then(r => {
-            if (!r.ok) throw new Error();
-            return r.arrayBuffer();
-        })
+        .then(r => r.arrayBuffer())
         .then(data => {
+
             const wb = XLSX.read(data, { type: 'array' });
             const ws = wb.Sheets['Final'] || wb.Sheets[wb.SheetNames[0]];
             const json = XLSX.utils.sheet_to_json(ws);
@@ -96,104 +93,109 @@ function loadDatabaseFile() {
             globalData = processData(json);
             filteredData = [...globalData];
 
-            console.log("✅ AUTO LOAD:", globalData.length);
+            console.log("✅ AUTO:", globalData.length);
 
             updateAll();
-        })
-        .catch(e => {
-            console.warn("⚠️ Auto load falhou", e);
         });
 }
 
-// ================= UPLOAD =================
-function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = e => {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws = wb.Sheets['Final'] || wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws);
-
-        globalData = processData(json);
-        filteredData = [...globalData];
-
-        console.log("✅ UPLOAD:", globalData.length);
-
-        updateAll();
-    };
-    reader.readAsArrayBuffer(file);
-}
-
-// ✅ FALTAVAM ESSAS FUNÇÕES
-function dropHandler(e) {
-    e.preventDefault();
-    handleFileSelect({ target: { files: e.dataTransfer.files } });
-}
-
-function dragOverHandler(e) { e.preventDefault(); }
-function dragEnterHandler(e) { e.preventDefault(); }
-function dragLeaveHandler(e) { e.preventDefault(); }
-
-// ================= KPIs =================
+// ================= KPI =================
 function updateKPIs() {
     const d = filteredData.at(-1);
     if (!d) return;
 
+    const safe = v => (v && !isNaN(v)) ? v : 0;
+
     setKPI('celuloseKPI', [
-        { label: 'IM', val: d.BHKP_IM },
-        { label: 'EU', val: d.BHKP_EU }
+        { label: 'IM', val: safe(d.BHKP_IM) },
+        { label: 'EU', val: safe(d.BHKP_EU) }
     ]);
 
-    setKPI('celuloseCNKPI', [{ label: 'CN', val: d.BHKP_CN }]);
+    setKPI('celuloseCNKPI', [
+        { label: 'CN', val: safe(d.BHKP_CN) }
+    ]);
 
     setKPI('tio2KPI', [
-        { label: 'IM', val: d.TIO2_IM },
-        { label: 'CN', val: d.TIO2_CN }
+        { label: 'IM', val: safe(d.TIO2_IM) },
+        { label: 'CN', val: safe(d.TIO2_CN) }
     ]);
 
     setKPI('resinasKPI', [
-        { label: 'UF', val: d.RES_UF },
-        { label: 'MF', val: d.RES_MF }
+        { label: 'UF', val: safe(d.RES_UF) },
+        { label: 'MF', val: safe(d.RES_MF) }
     ]);
 
     setKPI('freteImportKPI', [
-        { label: 'EU', val: d.CNT_EU_EUR },
-        { label: 'CN', val: d.CNT_CN_USD }
+        { label: 'EU', val: safe(d.CNT_EU_EUR) },
+        { label: 'CN', val: safe(d.CNT_CN_USD) }
     ]);
 
     setKPI('freteExportKPI', [
-        { label: 'GQ', val: d.CNT_GQ_USD },
-        { label: 'CG', val: d.CNT_CG_USD },
-        { label: 'VC', val: d.CNT_VC_USD }
+        { label: 'GQ', val: safe(d.CNT_GQ_USD) },
+        { label: 'CG', val: safe(d.CNT_CG_USD) },
+        { label: 'VC', val: safe(d.CNT_VC_USD) }
     ]);
 }
 
 function setKPI(id, arr) {
     const el = document.getElementById(id);
-    if (!el) return;
 
     el.innerHTML = arr.map(i => `
         <div class="kpi-item">
             <span>${i.label}</span>
-            <strong>${i.val?.toFixed(0) || '--'}</strong>
+            <span class="value">${i.val.toLocaleString('pt-BR')}</span>
         </div>
     `).join('');
 }
 
+// ================= MÉTRICAS (RESTAURADO) =================
+function updateMetrics() {
+
+    Object.keys(chartSeriesConfig).forEach(chart => {
+
+        const box = document.getElementById(chart + "Metrics");
+        if (!box) return;
+
+        const last = filteredData.at(-1);
+        const prev = filteredData.at(-2);
+
+        if (!last || !prev) return;
+
+        let html = '';
+
+        chartSeriesConfig[chart].forEach(s => {
+
+            const v1 = prev[s.field];
+            const v2 = last[s.field];
+
+            const pct = v1 ? ((v2 - v1) / v1) * 100 : 0;
+
+            html += `
+                <div class="metric-row">
+                    <span>${s.label}</span>
+                    <span>${pct.toFixed(1)}%</span>
+                </div>
+            `;
+        });
+
+        box.innerHTML = html;
+    });
+}
+
 // ================= CHART =================
-function createChart(id, cfg) {
+function createChart(id, config) {
+
     const ctx = document.getElementById(id);
-    if (!ctx) return;
 
     if (charts[id]) charts[id].destroy();
 
     charts[id] = new Chart(ctx, {
         type: 'line',
         data: {
-            labels: filteredData.map(d => d.Data.toLocaleDateString()),
-            datasets: cfg.map(s => ({
+            labels: filteredData.map(d =>
+                d.Data.toLocaleDateString('pt-BR', { timeZone: 'UTC' })
+            ),
+            datasets: config.map(s => ({
                 label: s.label,
                 data: filteredData.map(d => d[s.field]),
                 borderColor: s.color,
@@ -209,18 +211,15 @@ function updateCharts() {
     });
 }
 
-// ================= UPDATE =================
+// ================= ALL =================
 function updateAll() {
     updateCharts();
     updateKPIs();
+    updateMetrics(); // ✅ VOLTOU
 }
 
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
-    console.log("XLSX disponível?", typeof XLSX);
     loadDatabaseFile();
 });
-
-window.handleFileSelect = handleFileSelect;
-window.dropHandler = dropHandler;
-window.dragOverHandler = dragOverHandler;
+``
