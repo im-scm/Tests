@@ -148,40 +148,6 @@ function setKPI(id, arr) {
     `).join('');
 }
 
-// ================= MÉTRICAS (RESTAURADO) =================
-function updateMetrics() {
-
-    Object.keys(chartSeriesConfig).forEach(chart => {
-
-        const box = document.getElementById(chart + "Metrics");
-        if (!box) return;
-
-        const last = filteredData.at(-1);
-        const prev = filteredData.at(-2);
-
-        if (!last || !prev) return;
-
-        let html = '';
-
-        chartSeriesConfig[chart].forEach(s => {
-
-            const v1 = prev[s.field];
-            const v2 = last[s.field];
-
-            const pct = v1 ? ((v2 - v1) / v1) * 100 : 0;
-
-            html += `
-                <div class="metric-row">
-                    <span>${s.label}</span>
-                    <span>${pct.toFixed(1)}%</span>
-                </div>
-            `;
-        });
-
-        box.innerHTML = html;
-    });
-}
-
 // ================= CHART =================
 function createChart(id, config) {
 
@@ -215,7 +181,101 @@ function updateCharts() {
 function updateAll() {
     updateCharts();
     updateKPIs();
-    updateMetrics(); // ✅ VOLTOU
+    updateAllMetrics(); // ✅ VOLTOU
+}
+
+function calculateChange(oldVal, newVal) {
+    if (!oldVal || oldVal === 0) return 0;
+    return ((newVal - oldVal) / oldVal) * 100;
+}
+
+function getYearStartData(data) {
+    if (!data.length) return [];
+    const year = data[data.length - 1].Data.getUTCFullYear();
+    return data.filter(d => d.Data.getUTCFullYear() === year);
+}
+
+function updateChartMetrics(chartType) {
+
+    const container = document.getElementById(chartType + "Metrics");
+    if (!container) return;
+
+    const series = chartSeriesConfig[chartType];
+    if (!series) return;
+
+    const data = filteredData;
+    if (data.length < 2) return;
+
+    const last = data[data.length - 1];
+    const prev = data[data.length - 2];
+
+    const ytdData = getYearStartData(data);
+
+    let html = '';
+
+    // HEADER (nomes das séries)
+    html += '<div class="metrics-header">';
+    html += '<div></div>';
+    series.forEach(s => {
+        html += `<div class="series-header">${s.label}</div>`;
+    });
+    html += '</div>';
+
+    // TIPOS DE MÉTRICA
+    const metrics = [
+        { key: 'mom', label: 'MOM' },
+        { key: 'ytd', label: 'YTD' },
+        { key: 'all', label: 'ALL' }
+    ];
+
+    metrics.forEach(metric => {
+
+        html += '<div class="metric-row">';
+        html += `<div class="metric-row-label">${metric.label}</div>`;
+
+        series.forEach(s => {
+
+            let value = 0;
+
+            if (metric.key === 'mom') {
+                value = calculateChange(prev[s.field], last[s.field]);
+            }
+
+            if (metric.key === 'ytd' && ytdData.length > 1) {
+                value = calculateChange(
+                    ytdData[0][s.field],
+                    ytdData[ytdData.length - 1][s.field]
+                );
+            }
+
+            if (metric.key === 'all') {
+                value = calculateChange(
+                    data[0][s.field],
+                    last[s.field]
+                );
+            }
+
+            const formatted = `${value > 0 ? '+' : ''}${value.toFixed(1)}%`;
+
+            html += `
+                <div class="metric-cell">
+                    <span class="metric-value">
+                        ${formatted}
+                    </span>
+                </div>
+            `;
+        });
+
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+function updateAllMetrics() {
+    Object.keys(chartSeriesConfig).forEach(chart => {
+        updateChartMetrics(chart);
+    });
 }
 
 // ================= INIT =================
