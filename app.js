@@ -29,16 +29,16 @@ const chartSeriesConfig = {
     resinas: [
         { field: 'RES_UF', label: 'UF', color: '#6B8E23' },
         { field: 'RES_MF', label: 'MF', color: '#CD853F' },
-        { field: 'USDBRL_GPC', label: 'USD', color: '#708090' }
+        { field: 'USDBRL_GPC', label: 'USD', color: '#708090', yAxis: 'y1' }
     ],
     moedas: [
         { field: 'USDBRL', label: 'USD', color: '#6B8E23' },
         { field: 'EURBRL', label: 'EUR', color: '#708090' },
-        { field: 'CNYBRL', label: 'CNY', color: '#CD853F' }
+        { field: 'CNYBRL', label: 'CNY', color: '#CD853F', yAxis: 'y1' }
     ],
     freteimport: [
         { field: 'CNT_EU_EUR', label: 'EU', color: '#6B8E23' },
-        { field: 'CNT_CN_USD', label: 'CN', color: '#CD853F' }
+        { field: 'CNT_CN_USD', label: 'CN', color: '#CD853F', yAxis: 'y1' }
     ],
     freteexport: [
         { field: 'CNT_GQ_USD', label: 'GQ', color: '#6B8E23' },
@@ -227,12 +227,27 @@ function createChart(id, config) {
                 label: s.label,
                 data: filteredData.map(d => d[s.field]),
                 borderColor: s.color,
-                tension: 0.3
+                tension: 0.3,
+                yAxisID: s.yAxis || 'y'
             }))
         },
         options: {
             responsive: true,
-            maintainAspectRatio: false, // ✅ ESSENCIAL
+            maintainAspectRatio: false,
+
+            scales: {
+                y: {
+                    type: 'linear',
+                    position: 'left'
+                },
+                y1: {
+                    type: 'linear',
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    }
+                }
+            }
         }
     });
 }
