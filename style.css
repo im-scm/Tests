@@ -498,6 +498,8 @@ font-size: var(--font-size-sm);
 font-weight: var(--font-weight-semibold);
 font-size: var(--font-size-lg);
 color: var(--color-text);
+text-align: right;
+font-weight: 600;
 }
 
 /* ----- GRÁFICOS ----- */
