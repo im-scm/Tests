@@ -122,6 +122,36 @@ function loadDatabaseFile() {
         });
 }
 
+function handleFileSelect(event) {
+
+    const file = event.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+
+    reader.onload = function(e) {
+
+        try {
+            const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+            const ws = wb.Sheets['Final'] || wb.Sheets[wb.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(ws);
+
+            globalData = processData(json);
+            filteredData = [...globalData];
+
+            console.log("✅ UPLOAD:", globalData.length);
+
+            updateDateInputs();
+            updateAll();
+
+        } catch (err) {
+            console.error("❌ ERRO NO UPLOAD:", err);
+        }
+    };
+
+    reader.readAsArrayBuffer(file);
+}
+
 // ================= KPI =================
 function updateKPIs() {
     const d = filteredData.at(-1);
@@ -310,28 +340,9 @@ function formatDateBR(date) {
     return `${d}/${m}/${y}`;
 }
 
-function handleFileSelect(e) {
-    const file = e.target.files[0];
-    if (!file) return;
-
-    const reader = new FileReader();
-    reader.onload = e => {
-        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
-        const ws = wb.Sheets['Final'] || wb.Sheets[wb.SheetNames[0]];
-        const json = XLSX.utils.sheet_to_json(ws);
-
-        globalData = processData(json);
-        filteredData = [...globalData];
-
-        updateDateInputs(); ✅ obrigatório aqui também
-        updateAll();
-    };
-
-    reader.readAsArrayBuffer(file);
-}
-
 // ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
     loadDatabaseFile();
 });
-``
+
+window.handleFileSelect = handleFileSelect;
