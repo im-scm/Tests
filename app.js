@@ -1,176 +1,223 @@
-// Global variables
+// ================= GLOBAL =================
 let globalData = [];
 let filteredData = [];
 let charts = {};
 
-// NYRIA 2025 colors (mantido)
+// ================= CORES =================
 const chartColors = {
     terracotta: '#B34A3A',
     terracottaLight: '#CD853F',
     violet: '#4A148C',
-    violetMedium: '#7B1FA2',
     brown: '#8B4513',
     olive: '#6B8E23',
-    stone: '#708090',
-    beige: '#F5F5DC'
+    stone: '#708090'
 };
 
-// =========================
-// ✅ NOVA CONFIG DE SÉRIES
-// =========================
+// ================= CONFIG DE SÉRIES =================
 const chartSeriesConfig = {
-    // ✅ Celulose (3 séries agora)
+
     celulose: [
-        { field: 'BHKP_IM', label: 'IM', color: '#CD853F', yAxisID: 'y' },
-        { field: 'BHKP_EU', label: 'EU', color: '#6B8E23', yAxisID: 'y' },
-        { field: 'BHKP_CN', label: 'CN', color: '#708090', yAxisID: 'y' }
+        { field: 'BHKP_IM', label: 'IM', color: '#CD853F' },
+        { field: 'BHKP_EU', label: 'EU', color: '#6B8E23' },
+        { field: 'BHKP_CN', label: 'CN', color: '#708090' }
     ],
 
-    // ✅ TIO2
     tio2: [
-        { field: 'TIO2_IM', label: 'IM', color: '#4A148C', yAxisID: 'y' },
-        { field: 'TIO2_CN', label: 'CN', color: '#CD853F', yAxisID: 'y' }
+        { field: 'TIO2_IM', label: 'IM', color: '#4A148C' },
+        { field: 'TIO2_CN', label: 'CN', color: '#CD853F' }
     ],
 
-    // ✅ METANOL
     metanol: [
-        { field: 'MET_GPC', label: 'GPC', color: '#708090', yAxisID: 'y' },
-        { field: 'MET_MN', label: 'MN', color: '#CD853F', yAxisID: 'y' }
+        { field: 'MET_GPC', label: 'GPC', color: '#708090' },
+        { field: 'MET_MN', label: 'MN', color: '#CD853F' }
     ],
 
-    // ✅ UREIA
     ureia: [
-        { field: 'URE_GPC', label: 'GPC', color: '#6B8E23', yAxisID: 'y' },
-        { field: 'URE_ME', label: 'ME', color: '#CD853F', yAxisID: 'y' }
+        { field: 'URE_GPC', label: 'GPC', color: '#6B8E23' },
+        { field: 'URE_ME', label: 'ME', color: '#CD853F' }
     ],
 
-    // ✅ MELAMINA
     melamina: [
-        { field: 'MEL_GPC', label: 'GPC', color: '#CD853F', yAxisID: 'y' },
-        { field: 'MEL_CN', label: 'CN', color: '#708090', yAxisID: 'y' }
+        { field: 'MEL_GPC', label: 'GPC', color: '#CD853F' },
+        { field: 'MEL_CN', label: 'CN', color: '#708090' }
     ],
 
-    // ✅ RESINAS
     resinas: [
-        { field: 'RES_UF', label: 'UF', color: '#6B8E23', yAxisID: 'y' },
-        { field: 'RES_MF', label: 'MF', color: '#CD853F', yAxisID: 'y' },
-        { field: 'USDBRL_GPC', label: 'USD', color: '#708090', yAxisID: 'y1' }
+        { field: 'RES_UF', label: 'UF', color: '#6B8E23' },
+        { field: 'RES_MF', label: 'MF', color: '#CD853F' },
+        { field: 'USDBRL_GPC', label: 'USD', color: '#708090' }
     ],
 
-    // ✅ CÂMBIO
     moedas: [
-        { field: 'USDBRL', label: 'USD', color: '#6B8E23', yAxisID: 'y' },
-        { field: 'EURBRL', label: 'EUR', color: '#708090', yAxisID: 'y' },
-        { field: 'CNYBRL', label: 'CNY', color: '#CD853F', yAxisID: 'y1' }
+        { field: 'USDBRL', label: 'USD', color: '#6B8E23' },
+        { field: 'EURBRL', label: 'EUR', color: '#708090' },
+        { field: 'CNYBRL', label: 'CNY', color: '#CD853F' }
     ],
 
-    // ✅ FRETE
     freteimport: [
-        { field: 'CNT_EU_EUR', label: 'EU', color: '#6B8E23', yAxisID: 'y' },
-        { field: 'CNT_CN_USD', label: 'CN', color: '#CD853F', yAxisID: 'y1' }
+        { field: 'CNT_EU_EUR', label: 'EU', color: '#6B8E23' },
+        { field: 'CNT_CN_USD', label: 'CN', color: '#CD853F' }
     ],
 
     freteexport: [
-        { field: 'CNT_GQ_USD', label: 'GQ', color: '#6B8E23', yAxisID: 'y' },
-        { field: 'CNT_CG_USD', label: 'CG', color: '#8B4513', yAxisID: 'y' },
-        { field: 'CNT_VC_USD', label: 'VC', color: '#CD853F', yAxisID: 'y' }
+        { field: 'CNT_GQ_USD', label: 'GQ', color: '#6B8E23' },
+        { field: 'CNT_CG_USD', label: 'CG', color: '#8B4513' },
+        { field: 'CNT_VC_USD', label: 'VC', color: '#CD853F' }
     ]
 };
 
-// =========================
-// ✅ MAPEAMENTO DE CHART IDs
-// =========================
-function getChartId(chartType) {
-    return {
-        celulose: 'celuloseChart',
-        tio2: 'tio2Chart',
-        metanol: 'metanolChart',
-        ureia: 'ureiaChart',
-        melamina: 'melaminaChart',
-        resinas: 'resinasChart',
-        moedas: 'moedasChart',
-        freteimport: 'freteImportChart',
-        freteexport: 'freteExportChart'
-    }[chartType];
+// ================= UTIL =================
+function parseNumber(v) {
+    return typeof v === 'number' ? v : parseFloat(v) || 0;
 }
 
-// =========================
-// ✅ CARREGAMENTO DO NOVO ARQUIVO
-// =========================
-function loadDatabaseFile() {
-    fetch('./app_scm_data.xlsx') // 👈 ALTERADO
-        .then(res => res.arrayBuffer())
-        .then(data => {
-            const workbook = XLSX.read(data, { type: 'array' });
-            const sheet = workbook.Sheets['Final'] || workbook.Sheets[workbook.SheetNames[0]];
-            const jsonData = XLSX.utils.sheet_to_json(sheet);
+function parseDateBR(str) {
+    const [d, m, y] = str.split('/');
+    return new Date(y, m - 1, d);
+}
 
-            globalData = processData(jsonData);
+// ================= PROCESSAMENTO =================
+function processData(data) {
+    return data.map(r => {
+        Object.keys(r).forEach(k => {
+            if (k !== 'Data') r[k] = parseNumber(r[k]);
+        });
+        r.Data = parseDateBR(r.Data);
+        return r;
+    }).sort((a, b) => a.Data - b.Data);
+}
+
+// ================= LOAD AUTO =================
+function loadDatabaseFile() {
+    fetch('./app_scm_data.xlsx')
+        .then(r => {
+            if (!r.ok) throw new Error();
+            return r.arrayBuffer();
+        })
+        .then(data => {
+            const wb = XLSX.read(data, { type: 'array' });
+            const ws = wb.Sheets['Final'] || wb.Sheets[wb.SheetNames[0]];
+            const json = XLSX.utils.sheet_to_json(ws);
+
+            globalData = processData(json);
             filteredData = [...globalData];
 
-            updateDateFilterPlaceholders();
-            applyDateFilters();
-            updateAllCharts();
-            updateAllMetrics();
-            updateKPIs();
+            updateAll();
+        })
+        .catch(() => {
+            console.warn('⚠️ Auto load falhou — use upload manual');
         });
 }
 
-// =========================
-// ✅ KPI ATUALIZADO
-// =========================
+// ================= UPLOAD =================
+function handleFileSelect(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = e => {
+        const wb = XLSX.read(new Uint8Array(e.target.result), { type: 'array' });
+        const ws = wb.Sheets['Final'] || wb.Sheets[wb.SheetNames[0]];
+        const json = XLSX.utils.sheet_to_json(ws);
+
+        globalData = processData(json);
+        filteredData = [...globalData];
+
+        updateAll();
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// drag-drop
+function dropHandler(e) {
+    e.preventDefault();
+    handleFileSelect({ target: { files: e.dataTransfer.files } });
+}
+function dragOverHandler(e) { e.preventDefault(); }
+
+// ================= KPI =================
 function updateKPIs() {
-    if (!filteredData.length) return;
+    const d = filteredData.at(-1);
+    if (!d) return;
 
-    const last = filteredData[filteredData.length - 1];
-
-    // ✅ Celulose EU
-    updateKPIBox('celuloseKPI', [
-        { label: 'IM', value: last.BHKP_IM },
-        { label: 'EU', value: last.BHKP_EU }
+    setKPI('celuloseKPI', [
+        { label: 'IM', val: d.BHKP_IM },
+        { label: 'EU', val: d.BHKP_EU }
     ]);
 
-    // ✅ Celulose CN
-    updateKPIBox('celuloseCNKPI', [
-        { label: 'CN', value: last.BHKP_CN }
+    setKPI('celuloseCNKPI', [
+        { label: 'CN', val: d.BHKP_CN }
     ]);
 
-    // ✅ TIO2
-    updateKPIBox('tio2KPI', [
-        { label: 'IM', value: last.TIO2_IM },
-        { label: 'CN', value: last.TIO2_CN }
+    setKPI('tio2KPI', [
+        { label: 'IM', val: d.TIO2_IM },
+        { label: 'CN', val: d.TIO2_CN }
     ]);
 
-    // ✅ RESINAS
-    updateKPIBox('resinasKPI', [
-        { label: 'UF', value: last.RES_UF },
-        { label: 'MF', value: last.RES_MF }
+    setKPI('resinasKPI', [
+        { label: 'UF', val: d.RES_UF },
+        { label: 'MF', val: d.RES_MF }
     ]);
 
-    // ✅ FRETE IMPORT
-    updateKPIBox('freteImportKPI', [
-        { label: 'EU', value: last.CNT_EU_EUR },
-        { label: 'CN', value: last.CNT_CN_USD }
+    setKPI('freteImportKPI', [
+        { label: 'EU', val: d.CNT_EU_EUR },
+        { label: 'CN', val: d.CNT_CN_USD }
     ]);
 
-    // ✅ FRETE EXPORT
-    updateKPIBox('freteExportKPI', [
-        { label: 'GQ', value: last.CNT_GQ_USD },
-        { label: 'CG', value: last.CNT_CG_USD },
-        { label: 'VC', value: last.CNT_VC_USD }
+    setKPI('freteExportKPI', [
+        { label: 'GQ', val: d.CNT_GQ_USD },
+        { label: 'CG', val: d.CNT_CG_USD },
+        { label: 'VC', val: d.CNT_VC_USD }
     ]);
 }
 
-// =========================
-// ✅ RESTANTE DO CÓDIGO (SEM ALTERAÇÃO ESTRUTURAL)
-// =========================
+function setKPI(id, arr) {
+    const el = document.getElementById(id);
+    if (!el) return;
 
-// (mantive 100% das funções existentes: parseNumber, date, charts, metrics etc)
-// 👉 NÃO alterei lógica de gráfico, styling, nem estrutura visual
+    el.innerHTML = arr.map(i => `
+        <div class="kpi-item">
+            <span>${i.label}</span>
+            <strong>${i.val?.toFixed(0) || '--'}</strong>
+        </div>
+    `).join('');
+}
 
-// initialization
+// ================= GRÁFICOS =================
+function createChart(id, cfg) {
+    const ctx = document.getElementById(id);
+    if (!ctx) return;
+
+    if (charts[id]) charts[id].destroy();
+
+    charts[id] = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: filteredData.map(d => d.Data.toLocaleDateString()),
+            datasets: cfg.map(s => ({
+                label: s.label,
+                data: filteredData.map(d => d[s.field]),
+                borderColor: s.color,
+                tension: 0.3
+            }))
+        }
+    });
+}
+
+function updateCharts() {
+    Object.keys(chartSeriesConfig).forEach(k => {
+        createChart(k + 'Chart', chartSeriesConfig[k]);
+    });
+}
+
+// ================= UPDATE ALL =================
+function updateAll() {
+    updateCharts();
+    updateKPIs();
+}
+
+// ================= INIT =================
 document.addEventListener('DOMContentLoaded', () => {
-    setupDateFilters();
     loadDatabaseFile();
 });
 
@@ -178,5 +225,3 @@ document.addEventListener('DOMContentLoaded', () => {
 window.handleFileSelect = handleFileSelect;
 window.dropHandler = dropHandler;
 window.dragOverHandler = dragOverHandler;
-window.dragEnterHandler = dragEnterHandler;
-window.dragLeaveHandler = dragLeaveHandler;
