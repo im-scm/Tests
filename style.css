@@ -414,7 +414,7 @@ font-size: var(--font-size-2xl);
 
 .kpi-boxes {
     display: grid;
-    grid-template-columns: repeat(6, 1fr); /* ✅ força 6 colunas */
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
     gap: 15px;
 }
 
